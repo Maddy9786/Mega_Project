@@ -1,0 +1,90 @@
+name: GitOPS-CI - build and push to Docker hub
+on:
+    push:  # whenver there is any change in src directory,pom.xml,Dockerfile that to in main directory this pipeline will get trigger
+        branches: [main]
+        paths:
+           - 'src/**'
+           - 'pom.xml'
+           - 'Dockerfile'
+    
+    workflow_dispatch:
+      
+permissions:
+    contents: write        # ideally workflow has read permission but here we need to update docker image tag and manifest update needs write permission
+
+env:
+    DOCKERHUB_REPO: ${{ env.DOCKERHUB_REPO }}
+    
+jobs: 
+    build-push:
+      name: Build, test and push docker image
+      runs-on: ubuntu-latest
+
+      steps: 
+         
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: install jdk21
+          uses: actions/setup-java@v5
+          with:
+            java-version: '25'
+            cache: 'maven'
+            distribution: 'temurin'
+
+        - name: Build with Maven compiling
+          run: ./mvnw clean package -DskipTests -B
+          
+        - name: Run test and continue if any errors occurs during test
+          run: ./mvnw test -B
+          continue-on-error: true
+
+        - name: image tag     # it takes the latest commit short sha and store it in a github variable called github_output
+          id: tag  # helps in reference the same 
+          run: echo "sha_short=$(git rev-parse --short head)" >> "$GITHUB_OUTPUT" 
+
+        - name: Login to docker hub
+          uses: docker/login-action@v3
+          env:
+            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}  
+
+        - name: Set up Docker Buildx  # support multi platform image building 
+          uses: docker/setup-buildx-action@v3    
+        
+
+        - name: Build and push Docker image
+          uses: docker/build-push-action@v5
+          with: 
+           context: .
+           push: true
+           tags: |
+              ${{ env.DOCKERHUB_REPO}}:latest
+              ${{ env.DOCKERHUB_REPO}}:${{ steps.tag.outputs.sha_short }} 
+           cache-from: type=gha
+           cache-to: type=gha,mode=max  
+
+        - name: update k8 manifest name 
+          run: |
+            sed -i "s|image: ${{ env.DOCKERHUB_REPO }}:.*| image: ${{ env.DOCKERHUB_REPO}}:${{ steps.tag.outputs.sha_short}}|" k8/bankapp-deployment.yml
+            
+        - name: push and commit to github
+          run: |
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git add k8s/bankapp-deployment.yml    
+              git diff --staged --quiet || git commit -m "ci: update bankapp image to ${{ steps.tag.outputs.sha_short }} [skip ci]" "
+              git push
+   
+
+
+
+
+
+
+                 
+        
+  
+
+
+

@@ -1,0 +1,12 @@
+### Terraform ###
+.Terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+

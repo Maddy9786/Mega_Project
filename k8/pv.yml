@@ -1,0 +1,13 @@
+
+#in EKS we dont create a PV wheres as dynamic prov takes plce once the pvc is declared so csi willcreate pvc taking refe of storage class
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3 
+  fsType: ext4  #once the storage is created in linux everything is filesystem
+reclaimPolicy: Delete #once the PVC is delete it will also gets deleted
+volumeBindingMode: WaitForFirstConsumer #create volume once the pod is scheduled in AZ so refer the same AZ
+allowVolumeExpansion: true   # whenever its need to expand just simply change the value

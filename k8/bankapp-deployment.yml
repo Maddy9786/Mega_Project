@@ -1,0 +1,108 @@
+#Here’s a complete Kubernetes Deployment YAML example with both readiness and liveness probes configured.
+#This example uses an HTTP-based health check, which is common for web applications.
+
+YamlapiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankapp-deployment
+  namespace: bankapp
+  labels:
+    app: bankapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: bankapp
+  template:
+    metadata:
+      labels:
+        app: bankapp
+    spec:
+      initContainers:
+         - name: wait-for-mysql
+           command: ["/bin/sh", "-c", "until nc -z mysql-service 3306; do sleep 2; done"]
+           resources:
+               requests:
+                  emory: "32Mi"
+                  cpu: "50m"
+               limits:
+                  memory: "64Mi"
+                  cpu: "100m"
+           
+         - name: init-mydb
+           image: busybox:1.28
+           command: ["/bin/sh", "-c", "until nc -z ollama-service 3306; do sleep 2; done"]
+           resources:
+               requests:
+                  emory: "32Mi"
+                  cpu: "50m"
+               limits:
+                  memory: "64Mi"
+                  cpu: "100m"
+      containers:
+        - name: bankapp
+          image: maddy9786/ai-bankapp-eks:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: bankapp-config
+            - secretRef:
+                name: bankapp-secret
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          # Liveness Probe: Checks if the container is still running
+          livenessProbe:
+            httpGet:
+              path: /actuator/health       # Endpoint for liveness check
+              port: 8080
+            initialDelaySeconds: 10  # Wait before first check
+            failureThreshold: 3 
+            periodSeconds: 10     # Restart after 3 consecutive failures
+
+          # Readiness Probe: Checks if the container is ready to serve traffic
+          readinessProbe:
+            httpGet:
+              path: /actuator/health        # Endpoint for readiness check
+              port: 8080
+            initialDelaySeconds: 30  # Wait before first check
+            failureThreshold: 15
+
+ 
+# Key Points
+
+# Liveness Probe
+
+# Ensures the container is still alive.
+# If it fails repeatedly, Kubernetes restarts the container.
+
+
+# Readiness Probe
+
+# Ensures the container is ready to serve traffic.
+# If it fails, Kubernetes removes the pod from the Service endpoints but does not restart it.
+
+
+# Startup Probe (optional)
+
+# Useful for apps that take a long time to initialize.
+# Prevents liveness/readiness checks from failing during startup.
+
+
+
+
+# ✅ Tip:
+# If your app doesn’t have /healthz or /ready endpoints, you can use:
+
+# TCP probe (tcpSocket) for port checks.
+# Command probe (exec) to run a script inside the container.
+
+
+# If you want, I can give you a version with TCP probes instead of HTTP for services without health endpoints.
+# Do you want me to prepare that?

@@ -1,0 +1,63 @@
+
+YamlapiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-deployment
+  namespace: bankapp
+  labels:
+    app: ollama
+spec:
+  selector:
+    matchLabels:
+      app: ollama
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports:
+            - containerPort: 11434
+          resources:
+            requests:
+               cpu: "2Gi"
+               memory: "900m"
+            limits:
+               cpu: "2.5Gi"
+               memory: "1500m"
+          volumeMounts:
+             - name: ollama-storage
+               mountPath: /root/.ollama
+          lifecycle:
+             postStarts:
+                exec:
+                    command:
+                         - /bin/sh
+                         - -c
+                         - |
+                          until ollama list > /dev/null 2>&1; do sleep 2; done
+                          ollama pull tinyllama      
+          # Liveness Probe: Checks if the container is still running
+          livenessProbe:
+            httpGet:
+              path: /     # Endpoint for liveness check
+              port: 11434
+            initialDelaySeconds: 60  # Wait before first check
+            periodSeconds: 10        # Check every 10s      
+            failureThreshold: 5      # Restart after 5 consecutive failures
+
+          # Readiness Probe: Checks if the container is ready to serve traffic
+          readinessProbe:
+            exec:
+               command: ["/bin/sh","-c","ollama-list | grep -q tinyllama"]
+            initialDelaySeconds: 30   # Wait before first check
+            failureThreshold: 30
+      
+    volumes: 
+     - name:  ollama-storage  
+       persistentVolumeClaim:
+          claimName: ollama-pvc

@@ -6,7 +6,6 @@ metadata:
   labels:
     app: mysql
 spec:
-  replicas: 3
   selector:
     matchLabels:
       app: mysql
@@ -22,6 +21,7 @@ spec:
           image: mysql:8.0 
           ports:
             - containerPort: 3306
+
 
           env:
               - name: MYSQL_ROOT_PASSWORD

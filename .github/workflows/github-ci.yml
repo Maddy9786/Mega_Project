@@ -32,6 +32,9 @@ jobs:
             cache: 'maven'
             distribution: 'temurin'
 
+        - name: permission assigned to mvwn
+          run: chmod +x mvnw
+
         - name: Build with Maven compiling
           run: ./mvnw clean package -DskipTests -B
           

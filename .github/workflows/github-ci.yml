@@ -48,16 +48,19 @@ jobs:
 
         - name: Login to docker hub
           uses: docker/login-action@v4
-          env:
-            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}  
+          with:
+            username: ${{ secrets.DOCKER_USERNAME }}
+            password: ${{ secrets.DOCKER_PASSWORD }}  
+
+        - name: Set up QEMU
+          uses: docker/setup-qemu-action@v4
 
         - name: Set up Docker Buildx  # support multi platform image building 
           uses: docker/setup-buildx-action@v4    
         
 
         - name: Build and push Docker image
-          uses: docker/build-push-action@v5
+          uses: docker/build-push-action@v7
           with: 
            context: .
            push: true

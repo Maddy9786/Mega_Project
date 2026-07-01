@@ -13,7 +13,7 @@ permissions:
     contents: write        # ideally workflow has read permission but here we need to update docker image tag and manifest update needs write permission
 
 env:
-    DOCKERHUB_REPO: ${{ env.DOCKERHUB_REPO }}
+    DOCKERHUB_REPO: maddy9786/ai-bankapp-eks
     
 jobs: 
     build-push:

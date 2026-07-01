@@ -47,13 +47,13 @@ jobs:
           run: echo "sha_short=$(git rev-parse --short head)" >> "$GITHUB_OUTPUT" 
 
         - name: Login to docker hub
-          uses: docker/login-action@v3
+          uses: docker/login-action@v4
           env:
             DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
             DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}  
 
         - name: Set up Docker Buildx  # support multi platform image building 
-          uses: docker/setup-buildx-action@v3    
+          uses: docker/setup-buildx-action@v4    
         
 
         - name: Build and push Docker image

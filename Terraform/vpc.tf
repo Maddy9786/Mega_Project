@@ -11,6 +11,7 @@ module "vpc" {
 
 
   enable_nat_gateway = true
+  map_public_ip_on_launch = true
 
 
   public_subnet_tags = {

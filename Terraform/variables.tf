@@ -6,7 +6,7 @@ variable "kubernetes_version" {
 
 variable "node_instance_type" {
   description = "This will give worker node instance type"
-  default     = "t3.micro"
+  default     = "t3.medium"
   type        = string
 }
 
